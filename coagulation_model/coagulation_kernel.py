@@ -48,12 +48,9 @@ class coagulation_kernel(object):
         # # Derived parameters
         # param['dvisc'] = param['kvisc'] * param['rho_fl']  # Dynamic viscosity [g cm^{-1} s^{-1}]
         # param['del_rho'] = (4.5 * 2.48) * param['kvisc'] * param['rho_fl'] / param['g'] * (param['d0'] / 2) ** (-0.83)
-        # param['conBr'] = 2.0 / 3.0 * param['k'] * param['temp'] / param['dvisc']
-        # param['v0'] = (np.pi / 6) * param['d0'] ** 3
-        # param['v_lower'] = param['v0'] * 2. ** np.arange(param['n_sections'])
-        # param['v_upper'] = 2.0 * param['v_lower']
-        # param['av_vol'] = 1.5 * param['v_lower']
-        # param['dcomb'] = (param['v_lower'] * 6 / np.pi) ** (1.0 / 3.0)
+ 
+
+
         # param['dwidth'] = (2 ** (1.0 / 3.0) - 1) * param['dcomb']
 
 
@@ -74,30 +71,35 @@ class coagulation_kernel(object):
         # general particulate contstants
         # ------------------------------
         self.density_particulate = 2480 # kg/m^3
-        self.density_particulate_kg_cm = self.density_particulate*1e-3 # g/cm^3
+        # self.density_particulate_kg_cm = self.density_particulate*1e-3 # g/cm^3
 
-        # spherical particulate constants
-        # -------------------------------
-        self.stokes_sphere_settling_const =  (2/9) * self.gravitational_acceleration * (self.density_particulate - self.density_liquid) / self.dynamic_viscosity
+        self.radius_of_sphere_to_radius_of_gyration = 1.36
         
         # fractal particulate constants
         # -----------------------------
 
         # For some of the detail see Stemmann et al (2004)
-        self.radius_of_sphere_to_radius_of_gyration = 1.36
+        # assumes aggregate of unit particles forming a fractal
+        # radius is calculated based on the radius of sphere by
+        # radius_fractal = alpha_frac * volume ** beta_frac
         
-        self.radius_unit_particle_m = 1e-6
-        self.radius_unit_particle_cm = self.radius_unit_particle_m * 100 # 1e-4
-    
+        self.radius_unit_particle_m = 1e-6  
         self.particle_fractal_dimension = 2.33
 
-        amfrac = (4/3 * np.pi) ** (-1 / self.particle_fractal_dimension) * self.radius_unit_particle_m ** (1 - 3 / self.particle_fractal_dimension)
-        self.amfrac = amfrac * np.sqrt(0.6)
-        self.bmfrac = 1. / self.particle_fractal_dimension
+        alpha_fractal = (4/3 * np.pi) ** (-1 / self.particle_fractal_dimension) * self.radius_unit_particle_m ** (1 - 3 / self.particle_fractal_dimension)
+        self.alpha_fractal = alpha_fractal * np.sqrt(0.6)
+        self.beta_fractal = 1. / self.particle_fractal_dimension
 
-        self.fractal_settling_constant_cm = self.density_particulate_kg_cm * (self.radius_unit_particle_cm)**(-0.83)
-        self.fractal_setling_constant = self.fractal_settling_constant_cm * 1000 * 1000 / 100 # SI
+        # settling constants
+        # -------------------------------
 
+        self.stokes_sphere_settling_const = (2/9) * self.gravitational_acceleration * (self.density_particulate - self.density_liquid) / self.dynamic_viscosity
+
+        self.jackson_lochmann_fractal_settling_constant = (2.48 * (self.radius_unit_particle_m*100)**(-0.83)) * 100  
+
+        # old and wrong (i think)
+        # self.jackson_lochmann_fractal_settling_constant = 2.48 * (self.radius_unit_particle_m)**(-0.83)  # empirical value in 1/cm/s
+        # self.jackson_lochmann_fractal_settling_constant = self.stokes_sphere_settling_const * 100 # SI
 
     # radius calculation functions
     # ---------------------------
@@ -125,8 +127,8 @@ class coagulation_kernel(object):
         Partly based on Stemmann et al (2004).
         """
 
-        alpha = self.amfrac 
-        beta = self.bmfrac
+        alpha = self.alpha_fractal 
+        beta = self.beta_fractal
 
         return alpha * volume ** beta
 
@@ -136,6 +138,19 @@ class coagulation_kernel(object):
         """
 
         return self.radius_of_sphere_to_radius_of_gyration * self.radius_conserved_volume(volume)
+
+    # volume calculation functions
+    # ---------------------------
+
+    def volume_sphere(self, radius):
+        """
+        Calculate the volume of a particle assuming a homogoneous density distribution.
+
+        Parameters:
+        - radius: radius of particle
+        """
+
+        return (4/3) * np.pi * radius**3
 
 
 
@@ -154,6 +169,8 @@ class coagulation_kernel(object):
         Returns:
         - beta: Kernel curvature
         """
+        
+        
 
         radius_gyration = (radius_i + radius_j) * self.radius_of_sphere_to_radius_of_gyration
         particle_ratio = np.min(radius_i,radius_j) / np.max(radius_i,radius_j)
@@ -172,12 +189,13 @@ class coagulation_kernel(object):
         
         return beta
 
+
     def rectilinear_differential_sedimentation(self,radius_i, radius_j):
         
         radius_gyration = (radius_i + radius_j) * self.radius_of_sphere_to_radius_of_gyration
         
-        velocity_i = self.settling_function(radius_i)
-        veloctiy_j = self.settling_function(radius_j)
+        velocity_i = self.settling_function(self.volume_sphere(radius_i))
+        veloctiy_j = self.settling_function(self.volume_sphere(radius_j))
 
         # Calculate the kernel value based on the difference in settling velocities and the radius of gyration
         beta = np.pi * abs(velocity_i - veloctiy_j) * radius_gyration**2
@@ -188,27 +206,81 @@ class coagulation_kernel(object):
     # settling functions
     # ------------------
 
+    def stokes_sphere_settling_velocity(self, volume_sphere):
 
-    def stokes_sphere_settling_velocity(self, radius_sphere):
+
         """
         Calculates the settling velocities of particles of
         given sizes based assuming a perfect homogeniously dense sphere.
         """
+        radius_sphere = self.radius_conserved_volume(volume_sphere)
+
         # stokes_sphere_settling_const = (2/9) * self.gravitational_acceleration * (self.density_particulate - self.density_liquid) / self.dynamic_viscosity
         v = self.stokes_sphere_settling_const * radius_sphere**2
 
         return v
 
 
-    def stokes_fractal_settling_velocity(self, radius_sphere):
+    def jackson_lochmann_fractal_settling_velocity(self, volume_sphere):
         """
         Settling Velocity calculates the settling velocities of particles of
         given sizes based on the fractal dimension of the particles.
-        """
 
-        v = self.fractal_setling_constant * radius_sphere**2
+        Based on equations provided in "Effect of coagulation on nutrient and 
+        light limitation of an algal bloom" by George A. Jackson and Steve E. Lochmann 
+        https://doi.org/10.4319/lo.1992.37.1.0077
+        """
+        radius_sphere = self.radius_conserved_volume(volume_sphere)
+        radius_fractal = self.radius_fractal(volume_sphere)
+
+        v = self.jackson_lochmann_fractal_settling_constant * radius_sphere**3 / radius_fractal
 
         return v
+
+    def kriest_fractal_settling_velocity(self, volume_sphere,omega = 0,zeta = 0):
+        """
+        Settling Velocity based on empirical estimabes by Ines Krist
+        https://doi.org/10.1016/S0967-0637(02)00127-9
+        Eq. (1) in the paper
+        """
+        # doc/figures/kriest_table_3.PNG
+        radius_sphere = self.radius_conserved_volume(volume_sphere)
+        
+        v = omega * (radius_sphere/self.radius_unit_particle_m)**(zeta-1)
+
+        return v
+
+    def kriest_power_law_settling_velocity(self, volume, B = 0, eta = 0):
+        """
+        Settling Velocity based on empirical estimabes by Ines Krist
+        https://doi.org/10.1016/S0967-0637(02)00127-9
+        "sinking speed" equation in the paper.
+        She assumes the diameter is in cm
+        To compensate for that I have to multiply the radius by 100.
+        And returns the velocity in m/d
+        Hence, we have to divide by 86400 to get m/s
+        This way B and eta are as in the paper.
+        """
+
+        radius = self.radius_conserved_volume(volume) * 1e2 # m to cm
+        
+        v = B * (2*radius)**(eta) / 86400 # m/d to m/s
+
+        return v
+   
+    def kriest_power_law_settling_velocity_dSAM(self, volume, B = 942 , eta = 1.17):
+        # dSAM short for dense snow aggregate model (phytoplankton + detritus)
+        # See table 3 and 2 
+
+        return self.kriest_power_law_settling_velocity(volume, B, eta)
+
+    def kriest_power_law_settling_velocity_pSAM(self, volume, B = 132 , eta = 0.62):
+        # dSAM short for dense snow aggregate model (phytoplankton + detritus)
+        # See table 3 and 2 
+
+        return self.kriest_power_law_settling_velocity(volume, B, eta)
+
+
 
     def evaluate_kernel(self, radius_i, radius_j):
         """
@@ -229,7 +301,7 @@ class coagulation_kernel(object):
         return beta
         
     
-# shear_stokes = coagulation_kernel(list_of_applied_kernels=['rectilinear_shear'], settling_function='stokes_fractal_settling_velocity')
+# shear_stokes = coagulation_kernel(list_of_applied_kernels=['rectilinear_shear'], settling_function='jackson_lochmann_fractal_settling_velocity')
 
 # shear_stokes.evaluate_kernel(1e-3,1e-3)
 
