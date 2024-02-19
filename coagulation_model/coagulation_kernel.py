@@ -206,7 +206,7 @@ class coagulation_kernel(object):
     # settling functions
     # ------------------
 
-    def stokes_sphere_settling_velocity(self, volume_sphere):
+    def settling_velocity_stokes_sphere(self, volume_sphere):
 
 
         """
@@ -221,7 +221,7 @@ class coagulation_kernel(object):
         return v
 
 
-    def jackson_lochmann_fractal_settling_velocity(self, volume_sphere):
+    def settling_velocity_jackson_lochmann_fractal(self, volume_sphere):
         """
         Settling Velocity calculates the settling velocities of particles of
         given sizes based on the fractal dimension of the particles.
@@ -237,9 +237,9 @@ class coagulation_kernel(object):
 
         return v
 
-    def kriest_fractal_settling_velocity(self, volume_sphere,omega = 0,zeta = 0):
+    def settling_velocity_kriest_fractal(self, volume_sphere,omega = 0,zeta = 0):
         """
-        Settling Velocity based on empirical estimabes by Ines Krist
+        Settling Velocity based on empirical estimabes by Ines kriest
         https://doi.org/10.1016/S0967-0637(02)00127-9
         Eq. (1) in the paper
         """
@@ -250,9 +250,9 @@ class coagulation_kernel(object):
 
         return v
 
-    def kriest_power_law_settling_velocity(self, volume, B = 0, eta = 0):
+    def settling_velocity_kriest(self, volume, B = 0, eta = 0):
         """
-        Settling Velocity based on empirical estimabes by Ines Krist
+        Settling Velocity based on empirical estimabes by Ines kriest
         https://doi.org/10.1016/S0967-0637(02)00127-9
         "sinking speed" equation in the paper.
         She assumes the diameter is in cm
@@ -268,17 +268,17 @@ class coagulation_kernel(object):
 
         return v
    
-    def kriest_power_law_settling_velocity_dSAM(self, volume, B = 942 , eta = 1.17):
-        # dSAM short for dense snow aggregate model (phytoplankton + detritus)
+    def settling_velocity_kriest_dense_aggregate(self, volume, B = 942 , eta = 1.17):
+        # dense_aggregate short for dense snow aggregate model (phytoplankton + detritus)
         # See table 3 and 2 
 
-        return self.kriest_power_law_settling_velocity(volume, B, eta)
+        return self.settling_velocity_kriest(volume, B, eta)
 
-    def kriest_power_law_settling_velocity_pSAM(self, volume, B = 132 , eta = 0.62):
-        # dSAM short for dense snow aggregate model (phytoplankton + detritus)
+    def settling_velocity_kriest_porous_aggregate(self, volume, B = 132 , eta = 0.62):
+        # dense_aggregate short for dense snow aggregate model (phytoplankton + detritus)
         # See table 3 and 2 
 
-        return self.kriest_power_law_settling_velocity(volume, B, eta)
+        return self.settling_velocity_kriest(volume, B, eta)
 
 
 
@@ -301,7 +301,7 @@ class coagulation_kernel(object):
         return beta
         
     
-# shear_stokes = coagulation_kernel(list_of_applied_kernels=['rectilinear_shear'], settling_function='jackson_lochmann_fractal_settling_velocity')
+# shear_stokes = coagulation_kernel(list_of_applied_kernels=['rectilinear_shear'], settling_function='settling_velocity_jackson_lochmann_fractal')
 
 # shear_stokes.evaluate_kernel(1e-3,1e-3)
 
