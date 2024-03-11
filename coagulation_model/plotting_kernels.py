@@ -22,7 +22,8 @@ def plot_normalized_kernel_map(test_kernel, test_kernel_label,
                                 reference_kernel, reference_kernel_label,
                                 n=100, r_min=1e-6, r_max=1e-3, 
                                 norm_range=[1e-15, 1e-8],
-                                save_path=None):
+                                save_path=None,
+                                scale = 'log'):
 
     betas_test = saturate_kernel_map(test_kernel, n, r_min, r_max)
     betas_reference = saturate_kernel_map(reference_kernel, n, r_min, r_max)
@@ -32,14 +33,21 @@ def plot_normalized_kernel_map(test_kernel, test_kernel_label,
 
     fig, ax = plt.subplots(figsize=(10,5))
 
+
     image = ax.imshow(betas_normalized, #[m**3/s]
                       extent=np.array([r_min, r_max, r_min, r_max]), # [mm]
-                      norm=norm, origin='lower')
+                      norm=norm, origin='lower',
+                      interpolation='bicubic'
+                      )
     cbar = plt.colorbar(image, ax=ax)
-    cbar.set_label('Beta (m^3/s)')
+    cbar.set_label('Beta ratio')
     ax.set_xlabel('Radius of particle i (m)')
     ax.set_ylabel('Radius of particle j (m)')
     ax.set_title(f'{test_kernel_label} / {reference_kernel_label}')
+
+    if scale == 'log':
+        ax.set_yscale('log')
+        ax.set_xscale('log')
 
     if save_path:
         plt.savefig(save_path)
@@ -61,7 +69,9 @@ def plot_kernel_diff_map(test_kernel, test_kernel_label,
 
     image = ax.imshow(betas_diff, #[m**3/s]
                       extent=np.array([r_min, r_max, r_min, r_max]), # [mm]
-                      norm=norm, origin='lower')
+                      norm=norm, origin='lower',
+                      interpolation='bicubic'
+                      )
     cbar = plt.colorbar(image, ax=ax)
     cbar.set_label('Beta (m^3/s)')
     ax.set_xlabel('Radius of particle i (m)')
@@ -74,7 +84,10 @@ def plot_kernel_diff_map(test_kernel, test_kernel_label,
 
 
 # create empty matrix to store beta values
-def plot_kernel_map(kernel, kernel_label, n=100, r_min=1e-6, r_max=1e-3,norm_range=[1e-15, 1e-8]):
+def plot_kernel_map(kernel, kernel_label,
+                    n=100, r_min=1e-6, r_max=1e-3,
+                    norm_range=[1e-15, 1e-8],
+                    scale = 'log'):
     
     betas = saturate_kernel_map(kernel, n, r_min, r_max)
 
@@ -83,7 +96,11 @@ def plot_kernel_map(kernel, kernel_label, n=100, r_min=1e-6, r_max=1e-3,norm_ran
     norm = LogNorm(vmin=norm_range[0], vmax=norm_range[1])
 
     # imshow with log scale with a norm range
-    image = ax.imshow(betas, extent=np.array([r_min, r_max, r_min, r_max]), norm=norm, origin='lower')
+    image = ax.imshow(betas,
+                      extent=np.array([r_min, r_max, r_min, r_max]), # [mm]
+                      norm=norm, origin='lower',
+                      interpolation='bicubic'
+                      )
 
     # colorbar 
     cbar = plt.colorbar(image, ax=ax)
@@ -91,6 +108,10 @@ def plot_kernel_map(kernel, kernel_label, n=100, r_min=1e-6, r_max=1e-3,norm_ran
     cbar.set_label('Beta (m^3/s)')
     ax.set_xlabel('Radius of particle i (m)')
     ax.set_ylabel('Radius of particle j (m)')
+
+    if scale == 'log':
+        ax.set_yscale('log')
+        ax.set_xscale('log')
 
     # add title
     fig.suptitle(kernel_label)

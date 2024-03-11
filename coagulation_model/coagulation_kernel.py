@@ -1,6 +1,6 @@
 import numpy as np
 
-class coagulation_kernel(object):
+class CoagulationKernel(object):
     def __init__(self, list_of_applied_kernels, settling_function):
 
         self.selected_kernels = []

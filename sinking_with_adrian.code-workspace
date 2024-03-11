@@ -5,6 +5,9 @@
 		}
 	],
 	"settings": {
-		"workbench.colorTheme": "Solarized Light"
+		"workbench.colorTheme": "Material Theme",
+		"workbench.preferredDarkColorTheme": "Default Dark Modern",
+		"window.autoDetectColorScheme": true,
+		"workbench.preferredLightColorTheme": "Default Light Modern"
 	}
 }
