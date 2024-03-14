@@ -13,7 +13,7 @@ coagulation_kernel = kernel(
 particle_size_distribution = psd(radius_sphere_min = 1e-6,radius_sphere_max = 1e-3,
                                  type='powerlaw',kwargs={'a':2e-12,'k':3})
 
-sectional_kernel = SectionalCoagulationKernels(coagulation_kernel,particle_size_distribution)
+sectional_kernel = SectionalCoagulationKernels(coagulation_kernel,particle_size_distribution,debug=True)
 sectional_kernel.eval_all_kernels()
 
 sectional_mass_changes = SectionalMassChanges(sectional_kernel,particle_size_distribution)

@@ -34,30 +34,35 @@ class SectionalMassChanges():
 
         for ll in range(len(self.data)):
 
-            # term 1
-            term_1 = 0 # for j<l: beta_1 & beta 2 = 0
+            # term 1 (beta1 - j&l; beta1 - burd)
+            term_1 = 0
+            for ii in range(ll):
+                for jj in range(ll):
+                    term_1 += beta[0,ii,jj] * Q[ii] * Q[jj]
+            term_1 = 0.5 * term_1
 
-            # term 2           
-            term_2_sum = beta[3,ll]*Q
-            term_2_sum = np.sum(term_2_sum[:ll])
+            # term 2.1 (beta2 - j&l; beta2 - burd)           
+            term_2_1 = 0
+            for ii in range(ll):
+                term_2_1 += beta[1,ii,jj] * Q[ii]
+            term_2_1 = Q[ll] * term_2_1
 
-            term_2 = Q[ll] * term_2_sum
+            # term 2.2 (beta2 - j&l; beta3 - burd)
+            term_2_2 = 0
+            for ii in range(ll):
+                term_2_2 += beta[2,ii,jj] * Q[ii]
+            term_2_2 = Q[ll] * term_2_2
 
-            # term 3
-                        # self.data[2,ll,ii] = result
-            term_3 = 0.5 * beta[4,ll,ll] * Q[ll]**2
+            # term 3 (beta3 - j&l; beta4 - burd)
+            term_3 = 0.5 * beta[3,ll,ll] * Q[ll]**2
 
-            # term 4
-            term_4_sum = beta[5,ll]*Q
-            term_4_sum = np.sum(term_4_sum[ll+1:])
-
-            term_4 = Q[ll] * term_4_sum
+            # term 4 (beta4 - j&l; beta5 - burd)
+            term_4 = 0
+            for ii in range(ll+1,len(self.data)):
+                term_4 += beta[4,ii,ll] * Q[ii]
+            term_4 = Q[ll] * term_4
 
             # sum all terms
-            self.data[ll] = term_1 - term_2 - term_3 - term_4
+            self.data[ll] = term_1 - term_2_1 + term_2_2 - term_3 - term_4
 
-        
-
-
-
-
+            # print(self.data)

@@ -17,9 +17,10 @@ class SectionalCoagulationKernels:
     
     |   J&L     | Burd
     |  beta_1.1 | beta_1
-    |  beta_1.2 | beta_2
-    |  beta_2   | beta_3
-    |  beta_3   | beta_4
+    |  beta_1.2 | beta_1
+    |  beta_2.1 | beta_2  <- positive, first term
+    |  beta_2.2 | beta_3  <- negative, second term
+    |  beta_3   | beta_4  <- both integrals put together
     |  beta_4   | beta_5
 
     J&L express their calculation based on particle masses.
@@ -30,7 +31,7 @@ class SectionalCoagulationKernels:
 
 
     def __init__(self, coagulation_kernel,particle_size_distribution,
-                 particle_density = 1, stickiness = 1):
+                 particle_density = 1, stickiness = 1, debug = False):
             
             self.coagulation_kernel = coagulation_kernel # beta(r_i, r_j)
             self.particle_size_distribution = particle_size_distribution
@@ -39,12 +40,13 @@ class SectionalCoagulationKernels:
             self.stickiness = stickiness
       
             self.data = np.zeros(
-                 (6, # number of sectional kernels + 1
-                  self.particle_size_distribution.number_size_classes, # l
-                  self.particle_size_distribution.number_size_classes  # i 
+                 (5, # number of sectional kernels (beta_1 - beta_5)
+                  self.particle_size_distribution.number_size_classes, # i
+                  self.particle_size_distribution.number_size_classes  # l 
                   )
                  )
 
+            self.debug = debug
             
 
     def symetric_integrand(self,r_i, r_j):
@@ -81,7 +83,7 @@ class SectionalCoagulationKernels:
         beta = self.coagulation_kernel
 
         integrand = beta.evaluate_kernel(r_i, r_j)
-        integrand = integrand / vol_i
+        integrand = integrand / vol_j
         
         return integrand
 
@@ -92,28 +94,42 @@ class SectionalCoagulationKernels:
         for all size classes.
         See J%L beta_1.1 
         """
-
-        number_size_classes = self.particle_size_distribution.number_size_classes
+        if self.debug:
+            print('Calculating sectional beta 1')
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
-        # for the coagulation calculations we assume that they interact as fractals
-        radii = self.coagulation_kernel.radius_fractal(self.coagulation_kernel.volume_sphere(radii))
 
         # ll corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
-        for ll in range(2,number_size_classes):
+        for ll in range(2,len(radii)):
+            jj = ll - 1
             for ii in range(1,ll): # range goes up to ll-1
+
+                if self.debug:
+                    print(f'Calculating beta_1 for i={ii} and l={ll}')
 
                 result, error = dblquad(self.symetric_integrand, 
                                         radii[ii-1], 
                                         radii[ii], 
-                                        lambda x: np.max([radii[ii-1] - x, radii[ll]]),
-                                        radii[ll-1])
+                                        lambda x: np.max([radii[jj-1] - x, radii[jj-1]]),
+                                        radii[jj-1])
 
-                result = (self.stickiness /radii[ii-1] /radii[ll-2]) * result
+                result = (self.stickiness /radii[ii-1] /radii[jj-1]) * result
 
-                self.data[1,ll,ii] = result
+                # 1 -1 to match with the matlab one based indexing
+                self.data[1 -1,ii-1,ll-1] = result
+
+                # print self data in a nice 9x9 matrix well formatted
+
+                if self.debug:
+                    print(
+                        np.array2string(
+                            result, precision=2, 
+                            separator=' ', suppress_small=True
+                            )
+                          )
+
 
 
     def sectional_kernel_2_eval(self):
@@ -123,27 +139,37 @@ class SectionalCoagulationKernels:
         See J%L beta_1.2 
         """
 
-        number_size_classes = self.particle_size_distribution.number_size_classes
+        if self.debug:
+            print('Calculating sectional beta 2')
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
-        # for the coagulation calculations we assume that they interact as fractals
-        radii = self.coagulation_kernel.radius_fractal(self.coagulation_kernel.volume_sphere(radii))
 
         # ii corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
-        for ll in range(2,number_size_classes):
-            for ii in range(ll-1,ll): # range goes up to ll-1
+        for ll in range(2,len(radii)):
+            for ii in range(1,ll): # range goes up to ll-1
 
-                result, error = dblquad(self.symetric_integrand, 
-                                        radii[ll-2], 
-                                        radii[ll-1], 
-                                        radii[ll-2],
-                                        radii[ll-1])
+                if self.debug:
+                    print(f'Calculating beta_2 for i={ii} and l={ll}')                
 
-                result = (self.stickiness /radii[ll-2] /radii[ll-2]) * result
+                result, error = dblquad(self.asymetric_1_integrand, 
+                                        radii[ii-1], 
+                                        radii[ii], 
+                                        lambda x: radii[ll]-x,
+                                        radii[ll])
 
-                self.data[2,ll,ii] = result
+                result = (self.stickiness /radii[ii-1] /radii[ll-1]) * result
+
+                self.data[2 -1,ii-1,ll-1] = result
+
+                if self.debug:
+                    print(
+                        np.array2string(
+                            result, precision=2, 
+                            separator=' ', suppress_small=True
+                            )
+                          )                
 
 
     def sectional_kernel_3_eval(self):
@@ -153,39 +179,38 @@ class SectionalCoagulationKernels:
         See J%L beta_2
         """
 
-        number_size_classes = self.particle_size_distribution.number_size_classes
+        if self.debug:
+            print('Calculating sectional beta 3')
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
-        # for the coagulation calculations we assume that they interact as fractals
-        radii = self.coagulation_kernel.radius_fractal(self.coagulation_kernel.volume_sphere(radii))
 
         # ii corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
-        for ll in range(2,number_size_classes):
+        for ll in range(2,len(radii)):
             for ii in range(1,ll): # range goes up to ll-1
 
+                if self.debug:
+                    print(f'Calculating beta_3 for i={ii} and l={ll}')            
+
                 # positive term
-                result_1, error = dblquad(self.asymetric_1_integrand, 
+                result, error = dblquad(self.asymetric_2_integrand, 
                                         radii[ii-1], 
-                                        radii[ii],
-                                        lambda x: radii[ll]-x,
-                                        radii[ll])
-
-                result_1 = (self.stickiness /radii[ii-1] /radii[ll-1]) * result_1
-
-                # negative term
-                result_2, error = dblquad(self.asymetric_2_integrand, 
-                                        radii[ii-1],
                                         radii[ii],
                                         radii[ll-1],
                                         lambda x: radii[ll]-x)
 
-                result_2 = (self.stickiness /radii[ii-1] /radii[ll-1]) * result_2
+                result = (self.stickiness /radii[ii-1] /radii[ll-1]) * result
 
-                result = result_1 - result_2
+                self.data[3 -1,ii-1,ll-1] = result
 
-                self.data[3,ll,ii] = result
+                if self.debug:
+                    print(
+                        np.array2string(
+                            result, precision=2, 
+                            separator=' ', suppress_small=True
+                            )
+                          )                
 
 
     def sectional_kernel_4_eval(self):
@@ -195,39 +220,38 @@ class SectionalCoagulationKernels:
         See J%L beta_3
         """
 
-        number_size_classes = self.particle_size_distribution.number_size_classes
+        if self.debug:
+            print('Calculating sectional beta 4')
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
-        # for the coagulation calculations we assume that they interact as fractals
-        radii = self.coagulation_kernel.radius_fractal(self.coagulation_kernel.volume_sphere(radii))
 
         # ii corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
-        for ll in range(1,number_size_classes):
+        for ll in range(1,len(radii)):
             for ii in range(ll,ll+1): # ii = ll
 
-                # positive term
-                result_1, error = dblquad(self.symetric_integrand, 
-                                        radii[ll-1], 
-                                        radii[ll],
-                                        radii[ll-1],
-                                        lambda x: x)
-
-                result_1 = (self.stickiness /radii[ll-1] /radii[ll-1]) * result_1
+                if self.debug:
+                    print(f'Calculating beta_4 for i={ii} and l={ll}')
 
                 # positive term
-                result_2, error = dblquad(self.symetric_integrand, 
+                result, error = dblquad(self.symetric_integrand, 
+                                        radii[ii-1], 
+                                        radii[ii],
                                         radii[ll-1],
-                                        radii[ll],
-                                        lambda x: x,
                                         radii[ll])
 
-                result_2 = (self.stickiness /radii[ll-1] /radii[ll-1]) * result_2
+                result = (self.stickiness /radii[ii-1] /radii[ll-1]) * result
 
-                result = result_1 - result_2
+                self.data[4 -1,ii-1,ll-1] = result
 
-                self.data[4,ll,ii] = result
+                if self.debug:
+                    print(
+                        np.array2string(
+                            result, precision=2, 
+                            separator=' ', suppress_small=True
+                            )
+                          )                
 
 
     def sectional_kernel_5_eval(self):
@@ -237,17 +261,19 @@ class SectionalCoagulationKernels:
         See J%L beta_4
         """
 
-        number_size_classes = self.particle_size_distribution.number_size_classes
+        if self.debug:
+            print('Calculating sectional beta 5')
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
-        # for the coagulation calculations we assume that they interact as fractals
-        radii = self.coagulation_kernel.radius_fractal(self.coagulation_kernel.volume_sphere(radii))
 
         # ii corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
-        for ll in range(1,number_size_classes-1): # l < i hence l != number_size_classes
-            for ii in range(ll,number_size_classes): # l < i < number_size_classes
+        for ll in range(1,len(radii)): # l < i hence l != number_size_classes
+            for ii in range(ll+1,len(radii)): # l < i < number_size_classes
+
+                if self.debug:
+                    print(f'Calculating beta_5 for i={ii} and l={ll}')
 
                 result, error = dblquad(self.asymetric_1_integrand, 
                                         radii[ii-1], 
@@ -257,7 +283,15 @@ class SectionalCoagulationKernels:
 
                 result = (self.stickiness /radii[ii-1] /radii[ll-1]) * result
 
-                self.data[5,ll,ii] = result
+                self.data[5 -1,ii-1,ll-1] = result
+
+                if self.debug:
+                    print(
+                        np.array2string(
+                            result, precision=2, 
+                            separator=' ', suppress_small=True
+                            )
+                          )                
 
 
     def eval_all_kernels(self):
