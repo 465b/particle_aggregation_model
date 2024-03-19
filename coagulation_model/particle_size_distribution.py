@@ -4,14 +4,21 @@ def set_up_parcile_size_classes(radius_sphere_min,radius_sphere_max):
     
     # calculate new number of size classes based on
     # radius_sphere_min and radius_sphere_max
-    # with the condition that r_i+1 == 2*r_i
+    # with the condition that the volume of each 
+    # size class doubles the volume of the previous size class
 
-    # Calculate the number of times we can double the radius_sphere_min
+    # min and max volume of the size classes
+    volume_min = (4/3) * np.pi * radius_sphere_min ** 3
+    volume_max = (4/3) * np.pi * radius_sphere_max ** 3
+
+    # Calculate the number of times we can double the volume 
     # before exceeding radius_sphere_max
-    n = int(np.floor(np.log2(radius_sphere_max / radius_sphere_min))) + 1
+    n = int(np.floor(np.log2(volume_max / volume_min))) + 1
     
-    # Generate the sizes using powers of 2, starting from radius_sphere_min
-    radius_boundary_spheres = radius_sphere_min * np.power(2, np.arange(n))
+    # # Generate the sizes using powers of 2, starting from volume_min
+
+    volume_boundary_spheres = volume_min * np.power(2, np.arange(n))
+    radius_boundary_spheres = (volume_boundary_spheres * 3 / (4 * np.pi)) ** (1 / 3)  
         
     radius_mean_spheres = np.convolve(
                   radius_boundary_spheres, 
