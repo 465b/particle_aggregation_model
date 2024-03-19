@@ -158,24 +158,25 @@ class CoagulationKernel(object):
     # ----------------
 
     # @staticmethod
-    def curviliniar_shear(self,radius_i, radius_j):
+    def curviliniar_shear(self,radius_i, radius_j,epsilon = 1e-8, nu = 1e-6):
         """
-        Calculate kernel curvature.
+        Calculate coagulation kernel with particles "avoiding" other particles
+        due to streamline curving around the particles.
 
         Parameters:
-        - r: Numpy array of particle radii [m]
-        - param: Dictionary with key 'r_to_rg' for converting radius to radius of gyration
-
+        - radius_i: Radius of particle i
+        - radius_j: Radius of particle j
+        - epsilon: turbulence kinetic energy dissipation rate
+        - nu: kinematic viscosity
+        
         Returns:
-        - beta: Kernel curvature
-        """
-        
-        
+        - beta: coagulation kernel value
+        """      
 
         radius_gyration = (radius_i + radius_j) * self.radius_of_sphere_to_radius_of_gyration
-        particle_ratio = np.min(radius_i,radius_j) / np.max(radius_i,radius_j)
+        particle_ratio = np.min([radius_i,radius_j]) / np.max([radius_i,radius_j])
         coag_efficiency = 1 - (1 + 5*particle_ratio + 2.5*particle_ratio**2) / (1 + particle_ratio)**5
-        beta = np.sqrt(8* np.pi / 15) * coag_efficiency * radius_gyration**3
+        beta = np.sqrt(8*np.pi*epsilon/15/nu) * coag_efficiency * radius_gyration**3
 
         return beta
 
@@ -193,6 +194,11 @@ class CoagulationKernel(object):
     def rectilinear_differential_sedimentation(self,radius_i, radius_j):
         
         radius_gyration = (radius_i + radius_j) * self.radius_of_sphere_to_radius_of_gyration
+
+        # radius_fractal_i = self.radius_fractal(self.volume_sphere(radius_i))
+        # radius_fractal_j = self.radius_fractal(self.volume_sphere(radius_j))
+
+        # radius_gyration = (radius_fractal_i + radius_fractal_j) * self.radius_of_sphere_to_radius_of_gyration
         
         velocity_i = self.settling_function(self.volume_sphere(radius_i))
         veloctiy_j = self.settling_function(self.volume_sphere(radius_j))
