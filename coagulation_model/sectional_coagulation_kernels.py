@@ -99,6 +99,7 @@ class SectionalCoagulationKernels:
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
+        volumini = self.coagulation_kernel.volume_sphere(radii)
 
         # ll corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
@@ -113,22 +114,23 @@ class SectionalCoagulationKernels:
                                         radii[ii-1], 
                                         radii[ii], 
                                         lambda x: np.max([radii[jj-1] - x, radii[jj-1]]),
-                                        radii[jj-1])
+                                        radii[jj])
 
-                result = (self.stickiness /radii[ii-1] /radii[jj-1]) * result
+                result = (self.stickiness /volumini[ii-1] /volumini[jj-1]) * result
 
                 # 1 -1 to match with the matlab one based indexing
                 self.data[1 -1,ii-1,ll-1] = result
 
                 # print self data in a nice 9x9 matrix well formatted
 
-                if self.debug:
-                    print(
-                        np.array2string(
-                            result, precision=2, 
-                            separator=' ', suppress_small=True
-                            )
-                          )
+        if self.debug:
+            print(
+                np.array2string(
+                    self.data[0], precision=2, 
+                    separator=' ', suppress_small=True
+                    )
+                    )
+                    
 
 
 
@@ -144,6 +146,7 @@ class SectionalCoagulationKernels:
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
+        volumini = self.coagulation_kernel.volume_sphere(radii)        
 
         # ii corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
@@ -159,17 +162,17 @@ class SectionalCoagulationKernels:
                                         lambda x: radii[ll]-x,
                                         radii[ll])
 
-                result = (self.stickiness /radii[ii-1] /radii[ll-1]) * result
+                result = (self.stickiness /volumini[ii-1] /volumini[ll-1]) * result
 
                 self.data[2 -1,ii-1,ll-1] = result
 
-                if self.debug:
-                    print(
-                        np.array2string(
-                            result, precision=2, 
-                            separator=' ', suppress_small=True
-                            )
-                          )                
+        if self.debug:
+            print(
+                np.array2string(
+                    self.data[1], precision=2, 
+                    separator=' ', suppress_small=True
+                    )
+                    )              
 
 
     def sectional_kernel_3_eval(self):
@@ -184,6 +187,7 @@ class SectionalCoagulationKernels:
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
+        volumini = self.coagulation_kernel.volume_sphere(radii)
 
         # ii corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
@@ -200,17 +204,17 @@ class SectionalCoagulationKernels:
                                         radii[ll-1],
                                         lambda x: radii[ll]-x)
 
-                result = (self.stickiness /radii[ii-1] /radii[ll-1]) * result
+                result = (self.stickiness /volumini[ii-1] /volumini[ll-1]) * result
 
                 self.data[3 -1,ii-1,ll-1] = result
 
-                if self.debug:
-                    print(
-                        np.array2string(
-                            result, precision=2, 
-                            separator=' ', suppress_small=True
-                            )
-                          )                
+        if self.debug:
+            print(
+                np.array2string(
+                    self.data[2], precision=2, 
+                    separator=' ', suppress_small=True
+                    )
+                    )               
 
 
     def sectional_kernel_4_eval(self):
@@ -225,6 +229,7 @@ class SectionalCoagulationKernels:
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
+        volumini = self.coagulation_kernel.volume_sphere(radii)        
 
         # ii corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
@@ -241,17 +246,17 @@ class SectionalCoagulationKernels:
                                         radii[ll-1],
                                         radii[ll])
 
-                result = (self.stickiness /radii[ii-1] /radii[ll-1]) * result
+                result = (self.stickiness /volumini[ii-1] /volumini[ll-1]) * result
 
                 self.data[4 -1,ii-1,ll-1] = result
 
-                if self.debug:
-                    print(
-                        np.array2string(
-                            result, precision=2, 
-                            separator=' ', suppress_small=True
-                            )
-                          )                
+        if self.debug:
+            print(
+                np.array2string(
+                    self.data[3], precision=2, 
+                    separator=' ', suppress_small=True
+                    )
+                    )             
 
 
     def sectional_kernel_5_eval(self):
@@ -266,6 +271,7 @@ class SectionalCoagulationKernels:
 
         # by default particles are assumed to be perfect spheres
         radii = self.particle_size_distribution.radius_boundary_spheres
+        volumini = self.coagulation_kernel.volume_sphere(radii)        
 
         # ii corresponds to 'l' in J&l (doc/jl_sectional_kernel.png)
         # number_size_clases corresponds to 's'
@@ -281,17 +287,17 @@ class SectionalCoagulationKernels:
                                         radii[ll-1],
                                         radii[ll])
 
-                result = (self.stickiness /radii[ii-1] /radii[ll-1]) * result
+                result = (self.stickiness /volumini[ii-1] /volumini[ll-1]) * result
 
                 self.data[5 -1,ii-1,ll-1] = result
 
-                if self.debug:
-                    print(
-                        np.array2string(
-                            result, precision=2, 
-                            separator=' ', suppress_small=True
-                            )
-                          )                
+        if self.debug:
+            print(
+                np.array2string(
+                    self.data[4], precision=2, 
+                    separator=' ', suppress_small=True
+                    )
+                    )            
 
 
     def eval_all_kernels(self):
