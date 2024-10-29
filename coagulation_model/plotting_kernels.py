@@ -2,6 +2,49 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 
+## Plotting particle distributions
+# --------------------------------
+
+def plot_particlesize_classes(radius_boundary_spheres,xaxis_label='particle radius [m]'):
+    """
+    Plots the size class distribution on a number line
+    """
+
+    radius_mean_spheres = np.convolve(radius_boundary_spheres, np.ones(2, dtype=int), 'valid') / 2
+
+    
+    # Create visualization
+    fig, ax = plt.subplots(figsize=(10,1))
+    
+    n_points = len(radius_boundary_spheres)
+    ax.scatter(radius_boundary_spheres[:n_points], np.zeros(n_points), 
+              color='red', marker='|', s=400,label='class boundary')
+    ax.scatter(radius_mean_spheres[:n_points-1], np.zeros(n_points-1), 
+              color='blue', marker='|', s=400,label='class mean')
+    
+    # Format plot
+    ax.set_yticks([])
+    for spine in ['top', 'right', 'left']:
+        ax.spines[spine].set_visible(False)
+    ax.spines['bottom'].set_position(('data', 0))
+
+    # add legend
+    ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='lower left',
+              ncol=2, borderaxespad=0.)
+    
+    # show number of classes
+    ax.text(1, +1, f'{n_points-1} classes', transform=ax.transAxes,
+            ha='right', va='center', fontsize=12)
+
+    # add labels
+    ax.set_xlabel(xaxis_label)
+    
+    # return fig
+    return fig, ax
+
+## Plotting coagulation kernels
+#  ----------------------------
+
 def saturate_kernel_map(kernel, n=100, r_min=1e-6, r_max=1e-3):
     
     betas = np.zeros((n,n))
@@ -117,3 +160,50 @@ def plot_kernel_map(kernel, kernel_label,
     fig.suptitle(kernel_label)
 
     return fig, ax
+
+
+## Plotting sectional coagulation kernels
+# --------------------------------------
+
+def plot_sectional_kernels(sectional_kernel_data, figsize=(20, 4)):
+    """
+    Plot sectional coagulation kernels side by side.
+    
+    Parameters:
+    -----------
+    sectional_kernel_data : numpy.ndarray
+        Array containing the sectional kernel data with shape (n_kernels, n_rows, n_cols)
+        or (n_rows, n_cols)
+    figsize : tuple, optional
+        Figure size in inches (width, height). Default is (20, 4)
+    
+    Returns:
+    --------
+    fig : matplotlib.figure.Figure
+        The figure containing the plots
+    axs : numpy.ndarray
+        Array of subplot axes
+    """
+    # Handle both 2D and 3D arrays
+    if len(sectional_kernel_data.shape) == 2:
+        sectional_kernel_data = sectional_kernel_data[:,np.newaxis,:]
+        
+    n_kernels = sectional_kernel_data.shape[0]
+    fig, axs = plt.subplots(1, n_kernels, figsize=figsize)
+    
+    # Convert axs to array if only one kernel
+    if n_kernels == 1:
+        axs = np.array([axs])
+        
+    for i in range(n_kernels):
+        im = axs[i].imshow(sectional_kernel_data[i], 
+                          cmap='viridis', 
+                          origin='lower', 
+                          norm=LogNorm())
+        axs[i].set_title(f'Sectional Kernel {i+1}')
+        axs[i].set_xlabel('l')
+        axs[i].set_ylabel('i')
+        fig.colorbar(im, ax=axs[i])
+    
+    plt.tight_layout()
+    return fig, axs
