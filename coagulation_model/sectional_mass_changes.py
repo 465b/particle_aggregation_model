@@ -18,6 +18,8 @@ class SectionalMassChanges():
 
         self.data = np.zeros((self.particle_size_distribution.number_size_classes))
 
+        self.components = np.zeros((5,self.particle_size_distribution.number_size_classes))
+
     def calculate_mass_changes(self):
         """
         This function calculates the mass changes for
@@ -36,21 +38,21 @@ class SectionalMassChanges():
 
             # term 1 (beta1 - j&l; beta1 - burd)
             term_1 = 0
-            for ii in range(ll):
-                for jj in range(ll):
+            for ii in range(max(0,ll-1),ll+1):
+                for jj in range(max(0,ll-1),ll+1):
                     term_1 += beta[0,ii,jj] * Q[ii] * Q[jj]
             term_1 = 0.5 * term_1
 
-            # term 2.1 (beta2 - j&l; beta2 - burd)           
+            # term 2.1 (beta2, positive part - j&l; beta2 - burd)           
             term_2_1 = 0
-            for ii in range(ll):
-                term_2_1 += beta[1,ii,jj] * Q[ii]
+            for ii in range(ll+1):
+                term_2_1 += beta[1,ii,ll] * Q[ii]
             term_2_1 = Q[ll] * term_2_1
 
-            # term 2.2 (beta2 - j&l; beta3 - burd)
+            # term 2.2 (beta2, negative part - j&l; beta3 - burd)
             term_2_2 = 0
-            for ii in range(ll):
-                term_2_2 += beta[2,ii,jj] * Q[ii]
+            for ii in range(ll+1):
+                term_2_2 += beta[2,ii,ll] * Q[ii]
             term_2_2 = Q[ll] * term_2_2
 
             # term 3 (beta3 - j&l; beta4 - burd)
@@ -62,7 +64,14 @@ class SectionalMassChanges():
                 term_4 += beta[4,ii,ll] * Q[ii]
             term_4 = Q[ll] * term_4
 
+            self.components[0,ll] = term_1
+            self.components[1,ll] = term_2_1
+            self.components[2,ll] = term_2_2
+            self.components[3,ll] = term_3
+            self.components[4,ll] = term_4
+
+
+            # print(term_1, term_2_1, term_2_2, term_3, term_4)
+
             # sum all terms
             self.data[ll] = term_1 - term_2_1 + term_2_2 - term_3 - term_4
-
-            # print(self.data)
