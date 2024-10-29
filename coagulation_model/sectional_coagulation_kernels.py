@@ -1,8 +1,6 @@
 import numpy as np
 from scipy.integrate import dblquad
 
-from particle_size_distribution import set_up_parcile_size_classes
-
 class SectionalCoagulationKernels:
     """
     This class calculates the "sectional coagulation kernels" (\beta_{ijl})
@@ -49,23 +47,24 @@ class SectionalCoagulationKernels:
             self.debug = debug
             
 
-    def symetric_integrand(self,r_i, r_j):
+    def symetric_integrand(self,vol_i, vol_j):
 
-        vol_i = self.coagulation_kernel.volume_sphere(r_i)
-        vol_j = self.coagulation_kernel.volume_sphere(r_j)
+
+        r_i = self.coagulation_kernel.radius_conserved_volume(vol_i)
+        r_j = self.coagulation_kernel.radius_conserved_volume(vol_j)
 
         beta = self.coagulation_kernel
 
         integrand = beta.evaluate_kernel(r_i, r_j)
         integrand = integrand * (vol_i + vol_j)/vol_i/vol_j
-        
+
         return integrand
 
 
-    def asymetric_1_integrand(self,r_i, r_j):
+    def asymetric_1_integrand(self,vol_i, vol_j):
 
-        vol_i = self.coagulation_kernel.volume_sphere(r_i)
-        vol_j = self.coagulation_kernel.volume_sphere(r_j)
+        r_i = self.coagulation_kernel.radius_conserved_volume(vol_i)
+        r_j = self.coagulation_kernel.radius_conserved_volume(vol_j)
 
         beta = self.coagulation_kernel
 
@@ -75,10 +74,10 @@ class SectionalCoagulationKernels:
         return integrand
 
     
-    def asymetric_2_integrand(self,r_i, r_j):
+    def asymetric_2_integrand(self,vol_i, vol_j):
 
-        vol_i = self.coagulation_kernel.volume_sphere(r_i)
-        vol_j = self.coagulation_kernel.volume_sphere(r_j)
+        r_i = self.coagulation_kernel.radius_conserved_volume(vol_i)
+        r_j = self.coagulation_kernel.radius_conserved_volume(vol_j)
 
         beta = self.coagulation_kernel
 
@@ -111,25 +110,24 @@ class SectionalCoagulationKernels:
                     print(f'Calculating beta_1 for i={ii} and l={ll}')
 
                 result, error = dblquad(self.symetric_integrand, 
-                                        radii[ii-1], 
-                                        radii[ii], 
-                                        lambda x: np.max([radii[jj-1] - x, radii[jj-1]]),
-                                        radii[jj])
+                                        volumini[ii-1], 
+                                        volumini[ii], 
+                                        lambda x: np.max([volumini[jj-1] - x, volumini[jj-1]]),
+                                        volumini[jj])
 
                 result = (self.stickiness /volumini[ii-1] /volumini[jj-1]) * result
 
                 # 1 -1 to match with the matlab one based indexing
                 self.data[1 -1,ii-1,ll-1] = result
 
-                # print self data in a nice 9x9 matrix well formatted
-
+        # print self data in a nice 9x9 matrix well formatted
         if self.debug:
             print(
                 np.array2string(
                     self.data[0], precision=2, 
                     separator=' ', suppress_small=True
                     )
-                    )
+                )
                     
 
 
@@ -153,14 +151,13 @@ class SectionalCoagulationKernels:
         for ll in range(2,len(radii)):
             for ii in range(1,ll): # range goes up to ll-1
 
-                if self.debug:
-                    print(f'Calculating beta_2 for i={ii} and l={ll}')                
+                if self.debug: print(f'Calculating beta_2 for i={ii} and l={ll}')                
 
                 result, error = dblquad(self.asymetric_1_integrand, 
-                                        radii[ii-1], 
-                                        radii[ii], 
-                                        lambda x: radii[ll]-x,
-                                        radii[ll])
+                                        volumini[ii-1], 
+                                        volumini[ii], 
+                                        lambda x: volumini[ll]-x,
+                                        volumini[ll])
 
                 result = (self.stickiness /volumini[ii-1] /volumini[ll-1]) * result
 
@@ -194,15 +191,14 @@ class SectionalCoagulationKernels:
         for ll in range(2,len(radii)):
             for ii in range(1,ll): # range goes up to ll-1
 
-                if self.debug:
-                    print(f'Calculating beta_3 for i={ii} and l={ll}')            
+                if self.debug: print(f'Calculating beta_3 for i={ii} and l={ll}')          
 
                 # positive term
                 result, error = dblquad(self.asymetric_2_integrand, 
-                                        radii[ii-1], 
-                                        radii[ii],
-                                        radii[ll-1],
-                                        lambda x: radii[ll]-x)
+                                        volumini[ii-1], 
+                                        volumini[ii],
+                                        volumini[ll-1],
+                                        lambda x: volumini[ll]-x)
 
                 result = (self.stickiness /volumini[ii-1] /volumini[ll-1]) * result
 
@@ -241,10 +237,10 @@ class SectionalCoagulationKernels:
 
                 # positive term
                 result, error = dblquad(self.symetric_integrand, 
-                                        radii[ii-1], 
-                                        radii[ii],
-                                        radii[ll-1],
-                                        radii[ll])
+                                        volumini[ii-1], 
+                                        volumini[ii],
+                                        volumini[ll-1],
+                                        volumini[ll])
 
                 result = (self.stickiness /volumini[ii-1] /volumini[ll-1]) * result
 
@@ -282,10 +278,10 @@ class SectionalCoagulationKernels:
                     print(f'Calculating beta_5 for i={ii} and l={ll}')
 
                 result, error = dblquad(self.asymetric_1_integrand, 
-                                        radii[ii-1], 
-                                        radii[ii],
-                                        radii[ll-1],
-                                        radii[ll])
+                                        volumini[ii-1], 
+                                        volumini[ii],
+                                        volumini[ll-1],
+                                        volumini[ll])
 
                 result = (self.stickiness /volumini[ii-1] /volumini[ll-1]) * result
 
