@@ -134,9 +134,9 @@ class SectionalCoagulationKernels:
 
     def sectional_kernel_2_eval(self):
         """
-        Calculates the first sectional coagulation kernel beta_1
+        Calculates the second sectional coagulation kernel beta_2
         for all size classes.
-        See J%L beta_1.2 
+        See J%L beta_2 positive term
         """
 
         if self.debug:
@@ -153,7 +153,7 @@ class SectionalCoagulationKernels:
 
                 if self.debug: print(f'Calculating beta_2 for i={ii} and l={ll}')                
 
-                result, error = dblquad(self.asymetric_1_integrand, 
+                result, error = dblquad(self.asymetric_2_integrand, 
                                         volumini[ii-1], 
                                         volumini[ii], 
                                         lambda x: volumini[ll]-x,
@@ -174,9 +174,9 @@ class SectionalCoagulationKernels:
 
     def sectional_kernel_3_eval(self):
         """
-        Calculates the first sectional coagulation kernel beta_1
+        Calculates the thrid sectional coagulation kernel beta_3
         for all size classes.
-        See J%L beta_2
+        See J%L beta_2 negative term
         """
 
         if self.debug:
