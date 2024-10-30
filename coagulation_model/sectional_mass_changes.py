@@ -75,3 +75,39 @@ class SectionalMassChanges():
 
             # sum all terms
             self.data[ll] = term_1 - term_2_1 + term_2_2 - term_3 - term_4
+
+
+
+    def calc_coag_mass_changes_matmul(self):
+        """
+        Calculate the derivatives in the population balance equations.
+        Translated from Burds MATLAB code.
+        """
+            
+        Q = self.particle_size_distribution.data
+        
+        beta = self.sectional_coagulation_kernels.data
+        b1 = beta[0,:,:]
+        b25 = beta[1,:,:] - beta[2,:,:] - beta[3,:,:] - beta[4,:,:]
+        
+        # Replace negative values with small positive number
+        # Q = np.maximum(Q, np.finfo(float).eps)
+        
+        # Convert to row vector
+        Q_r = Q.reshape(1, -1)
+        
+        # Create shifted vector with 0 padding at start
+        Q_shift = np.zeros_like(Q_r)
+        Q_shift[0, 1:] = Q_r[0, :-1]
+        
+        # Calculate terms
+        term1 = Q_r @ b25  # Matrix multiplication
+        term1 = Q_r * term1   # Element-wise multiplication
+        
+        term2 = Q_r @ b1   # Matrix multiplication
+        term2 = term2 * Q_shift  # Element-wise multiplication
+        
+        # Calculate final result and convert back to column vector
+        dv_dt = (term1 + term2).T
+        
+        self.data = dv_dt
