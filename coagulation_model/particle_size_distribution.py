@@ -56,7 +56,7 @@ class ParticleSizeDistribution():
             self.distribution = self.select_distribution()
 
             # data containts the particle mass in each bin
-            self.data = self.fill_particle_size_classes_with_masses()
+            self.data = self.fill_particle_size_classes_with_masses() 
 
 
     def select_distribution(self):

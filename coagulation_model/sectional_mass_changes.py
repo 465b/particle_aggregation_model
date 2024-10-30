@@ -20,6 +20,8 @@ class SectionalMassChanges():
 
         self.components = np.zeros((5,self.particle_size_distribution.number_size_classes))
 
+        self.calc_coag_mass_changes()
+
     def calculate_mass_changes(self):
         """
         This function calculates the mass changes for

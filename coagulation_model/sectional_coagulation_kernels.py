@@ -45,7 +45,8 @@ class SectionalCoagulationKernels:
                  )
 
             self.debug = debug
-            
+
+            self.eval_all_kernels()
 
     def symetric_integrand(self,vol_i, vol_j):
 
@@ -113,6 +114,7 @@ class SectionalCoagulationKernels:
                                         volumini[ii-1], 
                                         volumini[ii], 
                                         lambda x: np.max([volumini[jj-1] - x, volumini[jj-1]]),
+                                        # volumini[jj-1],
                                         volumini[jj])
 
                 result = (self.stickiness /volumini[ii-1] /volumini[jj-1]) * result

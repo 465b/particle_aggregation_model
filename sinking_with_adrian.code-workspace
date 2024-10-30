@@ -5,7 +5,7 @@
 		}
 	],
 	"settings": {
-		"workbench.colorTheme": "Material Theme",
+		"workbench.colorTheme": "Material Theme Palenight High Contrast",
 		"workbench.preferredDarkColorTheme": "Default Dark Modern",
 		"window.autoDetectColorScheme": true,
 		"workbench.preferredLightColorTheme": "Default Light Modern"

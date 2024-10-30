@@ -5,7 +5,7 @@ from matplotlib.colors import LogNorm
 ## Plotting particle distributions
 # --------------------------------
 
-def plot_particlesize_classes(radius_boundary_spheres,xaxis_label='particle radius [m]'):
+def plot_particle_size_classes(radius_boundary_spheres,xaxis_label='particle radius [m]'):
     """
     Plots the size class distribution on a number line
     """
@@ -20,7 +20,7 @@ def plot_particlesize_classes(radius_boundary_spheres,xaxis_label='particle radi
     ax.scatter(radius_boundary_spheres[:n_points], np.zeros(n_points), 
               color='red', marker='|', s=400,label='class boundary')
     ax.scatter(radius_mean_spheres[:n_points-1], np.zeros(n_points-1), 
-              color='blue', marker='|', s=400,label='class mean')
+              color='blue', marker='|', s=300,label='class mean')
     
     # Format plot
     ax.set_yticks([])
@@ -41,6 +41,34 @@ def plot_particlesize_classes(radius_boundary_spheres,xaxis_label='particle radi
     
     # return fig
     return fig, ax
+
+
+def plot_particle_size_distribution(particle_size_distribution, x_axis_scale='log', y_axis_scale='linear'):
+    """
+    Plots the particle size distribution as a bar chart
+    using the particle_size_distribution mean radius
+    """
+    
+    radius_mean_spheres = np.convolve(particle_size_distribution.radius_boundary_spheres, np.ones(2, dtype=int), 'valid') / 2
+
+    n_classes = len(radius_mean_spheres)
+    fig, ax = plt.subplots()
+    # each bar is centered on the mean radius[ii] of the size class
+    # extending from radius_boundary_spheres[ii] to radius_boundary_spheres[ii+1]
+    ax.bar(radius_mean_spheres, particle_size_distribution.data, width=np.diff(particle_size_distribution.radius_boundary_spheres))
+    ax.set_xlabel("particle size class radius")
+    ax.set_ylabel('total something? in particle class ]')
+    ax.set_title('Particle size distribution')
+
+    ax.set_xscale(x_axis_scale)
+    ax.set_yscale(y_axis_scale)
+
+    # add text with the number of classes
+    ax.text(.9, .9, f'{n_classes} classes', transform=ax.transAxes,
+            ha='right', va='center', fontsize=12)
+
+    return fig, ax
+
 
 ## Plotting coagulation kernels
 #  ----------------------------
@@ -194,12 +222,17 @@ def plot_sectional_kernels(sectional_kernel_data, figsize=(20, 4)):
     # Convert axs to array if only one kernel
     if n_kernels == 1:
         axs = np.array([axs])
+    
+    # Find global min and max for consistent colorbar
+    vmin = np.min(sectional_kernel_data[sectional_kernel_data > 0])  # Exclude zeros
+    vmax = np.max(sectional_kernel_data)
+    norm = LogNorm(vmin=vmin, vmax=vmax)
         
     for i in range(n_kernels):
         im = axs[i].imshow(sectional_kernel_data[i], 
                           cmap='viridis', 
-                          origin='lower', 
-                          norm=LogNorm())
+                          origin='lower',
+                          norm=norm)
         axs[i].set_title(f'Sectional Kernel {i+1}')
         axs[i].set_xlabel('l')
         axs[i].set_ylabel('i')
