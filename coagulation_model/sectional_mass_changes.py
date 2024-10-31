@@ -20,10 +20,11 @@ class SectionalMassChanges():
 
         self.components = np.zeros((5,self.particle_size_distribution.number_size_classes))
 
-        self.calc_coag_mass_changes()
 
-    def calculate_mass_changes(self):
+    def calculate_mass_changes_jl(self):
         """
+        BROKEN: THIS CONTAINS SOME INDEXING ERROR AND CREATES INCORRECT RESULTS
+        -----------------------------------------------------------------------
         This function calculates the mass changes for
         each size class i at time t.
         It corresponds to eq. 9 in J&L.
