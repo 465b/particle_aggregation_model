@@ -32,7 +32,26 @@ Based on the index ranges within the table, the interactions can be visualized a
 
 ## How to install
 
+You can install the package using pip:
+
+```bash
+pip install particle_aggregation_model
+```
+
+Or you can install the package from source:
+
+```bash
+git clone https://github.com/465b/particle_aggregation_model.git
+cd particle_aggregation_model
+python -m build
+pip install -e .
+```
+
 ## How to run
 
+To get started, take a look at the [demo notebookts](https://github.com/465b/particle_aggregation_model/tree/781442d2c50fe9cd2d1ae08610ba30fd2c887098/demos)
 
 
+## Get in touch
+
+This is an early draft of the model. If you are curious to use it, or have any questions, please get in touch with me: laurin.steidle@uni-hamburg.de
