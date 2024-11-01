@@ -2,10 +2,12 @@
 # from coagulation_model.sectional_coagulation_kernels import sectional_coagulation_kernels
 import numpy as np
 
-class SectionalMassChanges():
+class SectionalVolumeConcentrationChanges():
     """
-    This class calculates the "sectional mass changes" (dQ_{i}/dt)
-    as presented in Eq. 9 in Jackson and Lochman (J&L) (10.4319/lo.1992.37.1.0077)
+    This class calculates the "sectional volume concentration changes" (dQ_{i}/dt)
+    as presented in Eq. 9 in Jackson and Lochman (J&L) (10.4319/lo.1992.37.1.0077).
+    In Jackson and Lochman they are expressed in terms of mass per volume,
+    here we express it in terms of volume per volume.
 
     (See doc/figures/jl_eq9.png)
     """
@@ -14,6 +16,12 @@ class SectionalMassChanges():
     def __init__(self, sectional_coagulation_kernels, particle_size_distribution):
         
         self.sectional_coagulation_kernels = sectional_coagulation_kernels # beta(r_i, r_j)
+        
+        beta = sectional_coagulation_kernels.data
+        self.b1 = beta[0,:,:]
+        self.b25 = beta[1,:,:] - beta[2,:,:] - beta[3,:,:] - beta[4,:,:]
+
+        # particle size distribution
         self.particle_size_distribution = particle_size_distribution
 
         self.data = np.zeros((self.particle_size_distribution.number_size_classes))
@@ -21,7 +29,7 @@ class SectionalMassChanges():
         self.components = np.zeros((5,self.particle_size_distribution.number_size_classes))
 
 
-    def calculate_mass_changes_jl(self):
+    def _calculate_volume_concentration_changes_jl(self):
         """
         BROKEN: THIS CONTAINS SOME INDEXING ERROR AND CREATES INCORRECT RESULTS
         -----------------------------------------------------------------------
@@ -80,22 +88,13 @@ class SectionalMassChanges():
             self.data[ll] = term_1 - term_2_1 + term_2_2 - term_3 - term_4
 
 
-
-    def calc_coag_mass_changes_matmul(self):
+    def calc_volume_concentration_changes(self,volume_concentration):
         """
         Calculate the derivatives in the population balance equations.
         Translated from Burds MATLAB code.
         """
             
-        Q = self.particle_size_distribution.data
-        
-        beta = self.sectional_coagulation_kernels.data
-        b1 = beta[0,:,:]
-        b25 = beta[1,:,:] - beta[2,:,:] - beta[3,:,:] - beta[4,:,:]
-        
-        # Replace negative values with small positive number
-        # Q = np.maximum(Q, np.finfo(float).eps)
-        
+        Q = volume_concentration
         # Convert to row vector
         Q_r = Q.reshape(1, -1)
         
@@ -104,13 +103,13 @@ class SectionalMassChanges():
         Q_shift[0, 1:] = Q_r[0, :-1]
         
         # Calculate terms
-        term1 = Q_r @ b25  # Matrix multiplication
+        term1 = Q_r @ self.b25  # Matrix multiplication
         term1 = Q_r * term1   # Element-wise multiplication
         
-        term2 = Q_r @ b1   # Matrix multiplication
+        term2 = Q_r @ self.b1   # Matrix multiplication
         term2 = term2 * Q_shift  # Element-wise multiplication
         
         # Calculate final result and convert back to column vector
         dv_dt = (term1 + term2).T
         
-        self.data = dv_dt
+        return dv_dt
