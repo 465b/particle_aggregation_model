@@ -111,7 +111,10 @@ class CoagulationKernel(object):
         Calculate the radius of a ball assuming a homogoneous volume distribution.
 
         Parameters:
-        - volume: volume of particle
+        - volume: volume of particle [m^3]
+
+        Returns:
+        - radius: radius of particle [m]
         """
 
         # by my calculation this should rather be 
@@ -125,6 +128,12 @@ class CoagulationKernel(object):
         """
         Calculate the radius of a fractal particle.
         Partly based on Stemmann et al (2004).
+
+        Parameters:
+        - volume: volume of particle [m^3]
+
+        Returns:
+        - radius: radius of particle [m]
         """
 
         alpha = self.alpha_fractal 
@@ -135,6 +144,16 @@ class CoagulationKernel(object):
     def radius_gyration(self, volume):
         """
         Calculate the radius of gyration of a particle.
+        The radius of gyration is a measure of the distribution of mass around a central axis.
+        For fractal aggregates, it represents the root mean square distance of mass elements
+        from the center of mass. This is typically larger than the volume-equivalent sphere radius
+        due to the branching, porous structure of aggregates.
+
+        Parameters:
+        - volume: volume of particle [m^3]
+
+        Returns:
+        - radius: radius of particle [m]
         """
 
         return self.radius_of_sphere_to_radius_of_gyration * self.radius_conserved_volume(volume)
@@ -144,10 +163,14 @@ class CoagulationKernel(object):
 
     def volume_sphere(self, radius):
         """
-        Calculate the volume of a particle assuming a homogoneous density distribution.
+        Calculate the volume of a particle assuming a "dense" particles 
+        or homogoneous density distribution.
 
         Parameters:
-        - radius: radius of particle
+        - radius: radius of particle [m]
+
+        Returns:
+        - volume: volume of particle [m^3]
         """
 
         return (4/3) * np.pi * radius**3
@@ -157,20 +180,19 @@ class CoagulationKernel(object):
     # kernel functions
     # ----------------
 
-    # @staticmethod
     def curviliniar_shear(self,radius_i, radius_j,epsilon = 1e-8, nu = 1e-6):
         """
         Calculate coagulation kernel with particles "avoiding" other particles
         due to streamline curving around the particles.
 
         Parameters:
-        - radius_i: Radius of particle i
-        - radius_j: Radius of particle j
-        - epsilon: turbulence kinetic energy dissipation rate
-        - nu: kinematic viscosity
+        - radius_i: Radius of particle i [m]
+        - radius_j: Radius of particle j [m]
+        - epsilon: turbulence kinetic energy dissipation rate [m^2 s^{-3}]
+        - nu: kinematic viscosity [m^2 s^{-1}]
         
         Returns:
-        - beta: coagulation kernel value
+        - beta: coagulation kernel [m^{-3} s^{-1}]
         """      
 
         radius_gyration = (radius_i + radius_j) * self.radius_of_sphere_to_radius_of_gyration
@@ -181,18 +203,39 @@ class CoagulationKernel(object):
         return beta
 
 
-    def rectilinear_shear(self,radius_i, radius_j):
+    def rectilinear_shear(self,radius_i, radius_j, gamma = 0.1):
+        """
+        Calculate coagulation kernel with particles collidingi due to shear.
+
+        Parameters:
+        - radius_i: Radius of particle i [m]
+        - radius_j: Radius of particle j [m]
+        - gamma: laminar(?) shear gradient [s^{-1}]
+
+        Returns:
+        - beta: coagulation kernel [m^{-3} s^{-1}]
+        """
 
         # Calculate radius of gyration
         radius_gyration = (radius_i + radius_j) * self.radius_of_sphere_to_radius_of_gyration
         # # Calculate the kernel value
-        beta = 1.3 * radius_gyration**3
+        beta = (4/3) * gamma * radius_gyration**3
         
         return beta
 
 
     def rectilinear_differential_sedimentation(self,radius_i, radius_j):
+        """
+        Calculate coagulation kernel with particles colliding due to differential sedimentation.
+
+        Parameters:
+        - radius_i: Radius of particle i [m]
+        - radius_j: Radius of particle j [m]
         
+        Returns:
+        - beta: coagulation kernel [m^{-3} s^{-1}]
+        """
+
         radius_gyration = (radius_i + radius_j) * self.radius_of_sphere_to_radius_of_gyration
 
         # radius_fractal_i = self.radius_fractal(self.volume_sphere(radius_i))
@@ -213,8 +256,6 @@ class CoagulationKernel(object):
     # ------------------
 
     def settling_velocity_stokes_sphere(self, volume_sphere):
-
-
         """
         Calculates the settling velocities of particles of
         given sizes based assuming a perfect homogeniously dense sphere.
@@ -307,8 +348,3 @@ class CoagulationKernel(object):
         return beta
         
     
-# shear_stokes = coagulation_kernel(list_of_applied_kernels=['rectilinear_shear'], settling_function='settling_velocity_jackson_lochmann_fractal')
-
-# shear_stokes.evaluate_kernel(1e-3,1e-3)
-
-
