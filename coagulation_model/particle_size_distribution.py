@@ -1,4 +1,5 @@
 import numpy as np 
+from scipy.integrate import solve_ivp
 
 
 
@@ -30,9 +31,60 @@ class ParticleSizeDistribution():
             # so volume of aggregates in each size class per unit volume
             # i.e. relative volume of aggregates in each size class
             # [m^{3} m^{-3}]
-            self.data = self.fill_particle_size_classes_with_volumes() 
-    
-    
+            self.initial_volume_concentration = self.fill_particle_size_classes_with_volumes() 
+
+
+    def perform_time_evolution(self, sectional_volume_concentration_changes, t_max, dt, integration_method='RK45'):
+
+        self.sectional_volume_concentration_changes = sectional_volume_concentration_changes
+        self.t_max = t_max
+        self.dt = dt
+        self.number_time_steps = int(self.t_max/self.dt)
+        self.integration_method = integration_method
+
+        # self.initialize_time_evolution_array()
+
+        self.perform_time_integration()
+
+
+    def perform_time_integration(self):
+        """
+        Perform the time integration of the particle size distribution.
+        The sectional coagulation kernels are used to calculate the 
+        volume concentration changes in each size class (dQ_{i}/dt).
+        """
+
+        def derivative(t, y):
+            return self.sectional_volume_concentration_changes.calc_volume_concentration_changes(y)
+
+        # Time span for integration
+        t_span = (0, self.t_max)
+        
+        # Solve the ODE system
+        solution = solve_ivp(
+            fun=derivative,
+            t_span=t_span,
+            y0=self.initial_volume_concentration,
+            method=self.integration_method,
+            t_eval=np.linspace(0, self.t_max, self.number_time_steps)
+        )
+
+        # Store the results in the data array
+        self.solution = solution
+        self.data = solution.y.T
+        self.time = solution.t
+        
+        
+
+    # initialize array for time evolution of particle size distribution
+    def initialize_time_evolution_array(self):
+        """
+        Initialize the time evolution array for the particle size distribution.
+        """
+        data = np.zeros((self.number_time_steps, self.number_size_classes))
+        self.data = data
+        
+
     def _set_up_particle_size_classes(self):
         """
         Set up the particle size classes based on the range of radii of the aggregates.
@@ -93,7 +145,10 @@ class ParticleSizeDistribution():
 
         return volume_concentration
 
-        
+
+
+    # Particle volume concentration distribution functions
+    # ----------------------------------------------------       
 
     @staticmethod
     def powerlaw(a,k):

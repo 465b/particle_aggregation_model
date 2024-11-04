@@ -110,6 +110,6 @@ class SectionalVolumeConcentrationChanges():
         term2 = term2 * Q_shift  # Element-wise multiplication
         
         # Calculate final result and convert back to column vector
-        dv_dt = (term1 + term2).T
+        dv_dt = (term1 + term2)[0]
         
         return dv_dt
