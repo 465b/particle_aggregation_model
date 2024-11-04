@@ -55,7 +55,12 @@ def plot_particle_size_distribution(particle_size_distribution, x_axis_scale='lo
     fig, ax = plt.subplots()
     # each bar is centered on the mean radius[ii] of the size class
     # extending from radius_boundary_spheres[ii] to radius_boundary_spheres[ii+1]
-    ax.bar(radius_mean_spheres, particle_size_distribution.data, width=np.diff(particle_size_distribution.radius_boundary_spheres))
+    if hasattr(particle_size_distribution, 'data'):
+        data_to_plot = particle_size_distribution.data
+    else:
+        data_to_plot = particle_size_distribution.initial_volume_concentration
+    ax.bar(radius_mean_spheres, data_to_plot,
+           width=np.diff(particle_size_distribution.radius_boundary_spheres))
     ax.set_xlabel("particle size class radius")
     ax.set_ylabel('total something? in particle class ]')
     ax.set_title('Particle size distribution')
@@ -153,8 +158,6 @@ def plot_kernel_diff_map(test_kernel, test_kernel_label,
         plt.savefig(save_path)
 
 
-
-# create empty matrix to store beta values
 def plot_kernel_map(kernel, kernel_label,
                     n=100, r_min=1e-6, r_max=1e-3,
                     norm_range=[1e-15, 1e-8],

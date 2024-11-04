@@ -55,9 +55,9 @@ class ParticleSizeDistribution():
         """
 
         def derivative(t, y):
-            return self.sectional_volume_concentration_changes.calc_volume_concentration_changes(y)
-
-        # Time span for integration
+            dy = self.sectional_volume_concentration_changes.calc_volume_concentration_changes(y)
+            return dy
+        
         t_span = (0, self.t_max)
         
         # Solve the ODE system
@@ -66,7 +66,9 @@ class ParticleSizeDistribution():
             t_span=t_span,
             y0=self.initial_volume_concentration,
             method=self.integration_method,
-            t_eval=np.linspace(0, self.t_max, self.number_time_steps)
+            t_eval=np.linspace(0, self.t_max, self.number_time_steps),
+            dense_output=True,
+            max_step=self.dt
         )
 
         # Store the results in the data array
