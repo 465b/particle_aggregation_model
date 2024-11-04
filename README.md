@@ -26,19 +26,29 @@ $^{i} \beta$ are referred to sectional coagulation kernels. Each represents a di
 
 Based on the index ranges within the table, the interactions can be visualized as interactions between bins as follows:
 
-![Aggregate size bin interactions](doc/figures/bin_interactions.png)
+![Aggregate size bin interactions](doc/figures/bin_interactions.png) (figure not yet included)
 
 
+## To do
+The model is currently not running as expected and produces in part non-physical results.
+The calculation of the sectional coagulation functions is suspected to be incorrect.
+In particular an indexing error seems to be present.
+
+To side step this issue, we hardcoded the sectional coagulation functions from the matlab code for the 20 size classes case.
+However, this seems to also produce declining total volume concentrations over time even tho the total volume concentration is expected to be conserved.
+
+- [ ] Fix sectional coagulation functions
+- [ ] Fix total volume concentration issue in time integration
 
 ## How to install
 
-You can install the package using pip:
+<!-- You can install the package using pip:
 
 ```bash
 pip install particle_aggregation_model
-```
+``` -->
 
-Or you can install the package from source:
+To install the package from source:
 
 ```bash
 git clone https://github.com/465b/particle_aggregation_model.git
@@ -49,8 +59,8 @@ pip install -e .
 
 ## How to run
 
-To get started, take a look at the [demo notebookts](https://github.com/465b/particle_aggregation_model/tree/781442d2c50fe9cd2d1ae08610ba30fd2c887098/demos)
-
+To get started, take a look at the [demo notebookts](https://github.com/465b/particle_aggregation_model/tree/781442d2c50fe9cd2d1ae08610ba30fd2c887098/demos)m in particular [model_demo_and_validation.ipynb](https://github.com/465b/particle_aggregation_model/blob/609ce09448798ce18fd13ab20eea9e1059e9c839/demos/model_demo_and_validation.ipynb)
+<!-- include the html of the notebook -->
 
 ## Get in touch
 
